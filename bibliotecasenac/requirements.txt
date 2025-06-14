@@ -1,0 +1,117 @@
+# Sistema de Biblioteca Senac - Requirements
+# Python 3.9+ required
+
+# Core Django Framework
+Django>=4.2.0,<5.0.0
+django-environ>=0.10.0
+
+# Database
+psycopg2-binary>=2.9.0  # PostgreSQL adapter (production)
+
+# Authentication & Security
+django-allauth>=0.54.0  # Advanced authentication
+django-cors-headers>=4.0.0  # CORS handling
+django-ratelimit>=4.0.0  # Rate limiting protection
+
+# File Handling & Media
+Pillow>=10.0.0  # Image processing for book covers
+django-storages>=1.13.0  # Cloud storage support
+boto3>=1.26.0  # AWS S3 integration (optional)
+
+# Forms & UI
+django-crispy-forms>=2.0.0  # Better form rendering
+crispy-bootstrap5>=0.7.0  # Bootstrap 5 integration
+django-widget-tweaks>=1.4.0  # Form widget customization
+
+# Email & Notifications
+django-extensions>=3.2.0  # Management commands
+celery>=5.3.0  # Async task processing
+redis>=4.5.0  # Message broker for Celery
+django-celery-beat>=2.5.0  # Periodic tasks
+
+# Admin Interface Enhancements
+django-admin-interface>=0.21.0  # Better admin UI
+django-import-export>=3.2.0  # Data import/export
+django-admin-sortable2>=2.1.0  # Sortable admin lists
+
+# API & Serialization (future-proofing)
+djangorestframework>=3.14.0  # REST API framework
+django-filter>=23.0.0  # Filtering support
+drf-spectacular>=0.26.0  # API documentation
+
+# Development & Debugging
+django-debug-toolbar>=4.1.0  # Debug toolbar
+django-extensions>=3.2.0  # Shell plus and other tools
+factory-boy>=3.3.0  # Test data generation
+faker>=18.0.0  # Fake data generation
+
+# Testing
+pytest>=7.4.0  # Testing framework
+pytest-django>=4.5.0  # Django integration for pytest
+pytest-cov>=4.1.0  # Coverage reporting
+model-bakery>=1.12.0  # Model instance creation for tests
+
+# Code Quality
+flake8>=6.0.0  # Linting
+black>=23.0.0  # Code formatting
+isort>=5.12.0  # Import sorting
+pre-commit>=3.3.0  # Git hooks
+
+# Monitoring & Logging
+sentry-sdk>=1.29.0  # Error tracking
+django-silk>=5.0.0  # Profiling and monitoring
+
+# Utilities
+python-dateutil>=2.8.0  # Date utilities
+pytz>=2023.3  # Timezone handling
+requests>=2.31.0  # HTTP requests
+openpyxl>=3.1.0  # Excel file handling
+reportlab>=4.0.0  # PDF generation
+weasyprint>=59.0  # HTML to PDF conversion
+
+# Production Dependencies
+gunicorn>=21.0.0  # WSGI server
+whitenoise>=6.5.0  # Static file serving
+django-heroku>=0.3.1  # Heroku deployment helpers
+
+# Environment Management
+python-decouple>=3.8  # Environment variables
+dj-database-url>=2.1.0  # Database URL parsing
+
+# Backup & Migration
+django-dbbackup>=4.0.0  # Database backup
+django-migration-linter>=5.0.0  # Migration linting
+
+# Search (optional - for advanced search features)
+django-haystack>=3.2.1  # Search framework
+whoosh>=2.7.4  # Pure Python search engine
+
+# Caching
+django-redis>=5.3.0  # Redis cache backend
+
+# Pagination & UI Enhancements
+django-bootstrap-pagination>=1.7.0  # Bootstrap pagination
+django-tables2>=2.6.0  # Dynamic tables
+django-select2>=8.1.0  # Enhanced select widgets
+
+# Social Features (future enhancement)
+django-notifications-hq>=1.8.0  # Notification system
+django-activity-stream>=2.0.0  # Activity tracking
+
+# Internationalization (if needed)
+django-rosetta>=0.9.9  # Translation interface
+django-modeltranslation>=0.18.0  # Model translation
+
+# Development Server Enhancements
+django-livereload-server>=0.4.0  # Auto-reload in development
+
+# Security Enhancements
+django-csp>=3.7.0  # Content Security Policy
+django-permissions-policy>=4.17.0  # Permissions Policy header
+
+# File Validation
+python-magic>=0.4.27  # File type detection
+django-cleanup>=8.0.0  # Cleanup orphaned files
+
+# Backup Solutions
+django-backup>=1.0.0  # Automated backups
