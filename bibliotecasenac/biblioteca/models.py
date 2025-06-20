@@ -1,10 +1,9 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
-from django.core.validators import MinValueValidator, MaxValueValidator
+from django.core.validators import MinValueValidator
 from django.core.exceptions import ValidationError
 from django.utils import timezone
 from datetime import timedelta
-import os
 # Create your models here.
 
 
@@ -61,8 +60,7 @@ class Autor(models.Model):
     class Meta:
         verbose_name = 'Autor'
         verbose_name_plural = 'Autores'
-        ording = ['nome']
-
+        ordering = ['nome']
 
 class Livro(models.Model):
     TIPO_GENERO = [
@@ -83,10 +81,8 @@ class Livro(models.Model):
         Autor,
         on_delete=models.CASCADE,
         related_name='livros',
-        verbose_name='Autor',
-        unique=True
+        verbose_name='Autor'
     )
-    
     genero =  models.CharField(
         max_length=20,
         choices=TIPO_GENERO,
@@ -127,4 +123,103 @@ class Livro(models.Model):
             self.quantidade_disponivel = self.quantidade
         
         super().save(*args, **kwargs)
-        
+    
+    def clean(self):
+        if self.quantidade_disponivel > self.quantidade:
+            raise ValidationError(
+                "A quantidade disponível não pode ser maior que a quantidade total."
+            )
+    def is_available(self):
+        return self.quantidade_disponivel > 0
+    
+    def get_author_display(self):
+        return  ", ".join([autor.nome for autor in self.autor.all()]) if self.autor else "Nenhum Autor"
+    
+    def get_total_loans(self):
+        return self.emprestimos.count()
+    
+    def delete(self, *args, **kwargs):
+        if self.reservas.filter(status='ativa').exists():
+            raise ValidationError("Não é possível excluir um livro com reservas ativas.")
+        if self.emprestimos.filter(status='ativo').exists():
+            raise ValidationError("Não é possível excluir um livro com empréstimos ativos.")
+        super().delete(*args, **kwargs)
+
+class Reserva(models.Model):
+    STATUS_RESERVA = [
+        ('ativa', 'Ativa'),
+        ('cancelada', 'Cancelada'),
+        ('expirada', 'Expirada'),
+    ]
+
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='reservas',
+        verbose_name='Usuário'
+    )
+    
+    livro = models.ForeignKey(
+        Livro,
+        on_delete=models.CASCADE,
+        related_name='reservas',
+        verbose_name='Livro'
+    )
+    
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_RESERVA,
+        default='ativa',
+        verbose_name='Status da Reserva'
+    )
+    
+    data_reserva = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Data da Reserva'
+    )
+    
+    data_expiracao = models.DateTimeField(
+        default=timezone.now,
+        verbose_name='Data de Expiração'
+    )
+    class Meta:
+        verbose_name = 'Reserva'
+        verbose_name_plural = 'Reservas'
+        ordering = ['-data_reserva']
+        constraints = [
+            models.UniqueConstraint(
+                fields=['usuario', 'livro', 'status'],
+                condition=models.Q(status='ativa'),
+                name='unique_active_reservation_per_user_and_book'
+            )
+        ]
+    def __str__(self):
+        return f"Reserva de {self.usuario.username} para {self.livro.titulo} ({self.get_status_display()})"
+
+    def clean(self):
+        if not self.pk and not self.usuario.pode_reservar():
+            raise ValidationError("O usuário não pode fazer mais reservas ativas.")
+
+        if not self.pk and not self.livro.is_available():
+            raise ValidationError("O livro não está disponível para reserva.")
+
+        if not self.pk:
+            reserva_existente = Reserva.objects.filter(
+                usuario=self.usuario,
+                livro=self.livro,
+                status='ativa'
+            ).exists()
+            if reserva_existente:
+                raise ValidationError("Já existe uma reserva ativa para este livro por este usuário.")
+
+    def save(self, *args, **kwargs):
+        is_new = not self.pk
+
+        if not is_new:
+            old_instance = Reserva.objects.get(pk=self.pk)
+
+        super().save(*args, **kwargs)
+
+        if is_new and self.status == 'ativa':
+            self.livro.quantidade_disponivel -= 1
+            self.livro.save()
