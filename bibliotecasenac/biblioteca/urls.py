@@ -47,6 +47,31 @@ urlpatterns = [
     path('admin/usuarios/<int:pk>/', views.UsuarioDetailView.as_view(), name='usuario_detail'),
     
     # URLs para administração de usuários
+    path('admin/usuarios/<int:pk>/editar/', views.UsuarioUpdateView.as_view(), name='usuario_update'),
+    path('admin/usuarios/<int:pk>/deletar/', views.UsuarioDeleteView.as_view(), name='usuario_delete'),
+    
+    # URLs para empréstimos
+    path('emprestimos/', views.EmprestimoListView.as_view(), name='emprestimo_list'),
+    path('emprestimos/<int:pk>/', views.EmprestimoDetailView.as_view(), name='emprestimo_detail'),
+    path('admin/emprestimos/criar/', views.EmprestimoCreateView.as_view(), name='emprestimo_create'),
+    path('emprestimos/<int:pk>/devolver/', views.devolver_livro, name='devolver_livro'),
+    path('emprestimos/<int:pk>/renovar/', views.renovar_emprestimo, name='renovar_emprestimo'),
+    
+    # URLs para categorias
+    path('categorias/', views.CategoriaListView.as_view(), name='categoria_list'),
+    path('admin/categorias/criar/', views.CategoriaCreateView.as_view(), name='categoria_create'),
+    path('admin/categorias/<int:pk>/editar/', views.CategoriaUpdateView.as_view(), name='categoria_update'),
+    path('admin/categorias/<int:pk>/deletar/', views.CategoriaDeleteView.as_view(), name='categoria_delete'),
+    
+    # URLs para relatórios e dashboard
+    path('relatorios/', views.RelatoriosView.as_view(), name='relatorios'),
+    path('dashboard/', views.DashboardView.as_view(), name='dashboard'),
+    
+    # AJAX URLs
+    path('ajax/livros-disponiveis/', views.livros_disponiveis, name='livros_disponiveis'),
+    path('ajax/verificar-disponibilidade/<int:livro_id>/', views.verificar_disponibilidade, name='ajax_verificar_disponibilidade'),
+    
+    # URLs para administração
     path('api/livros/disponibilidade/<int:livro_id>/', views.VerificarDisponibilidadeView.as_view(), name='verificar_disponibilidade'),
     path('api/reservas/expirar/', views.ExpirarReservasView.as_view(), name='expirar_reservas'),
 ]

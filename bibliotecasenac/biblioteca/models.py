@@ -171,17 +171,18 @@ class Reserva(models.Model):
         choices=STATUS_RESERVA,
         default='ativa',
         verbose_name='Status da Reserva'
-    )
-    
+    )    
     data_reserva = models.DateTimeField(
         auto_now_add=True,
         verbose_name='Data da Reserva'
     )
     
     data_expiracao = models.DateTimeField(
-        default=timezone.now,
+        null=True,
+        blank=True,
         verbose_name='Data de Expiração'
     )
+    
     class Meta:
         verbose_name = 'Reserva'
         verbose_name_plural = 'Reservas'
@@ -193,6 +194,7 @@ class Reserva(models.Model):
                 name='unique_active_reservation_per_user_and_book'
             )
         ]
+    
     def __str__(self):
         return f"Reserva de {self.usuario.username} para {self.livro.titulo} ({self.get_status_display()})"
 
@@ -214,6 +216,10 @@ class Reserva(models.Model):
 
     def save(self, *args, **kwargs):
         is_new = not self.pk
+        
+        # Set expiration date for new reservations (7 days from now)
+        if is_new and not self.data_expiracao:
+            self.data_expiracao = timezone.now() + timedelta(days=7)
 
         if not is_new:
             old_instance = Reserva.objects.get(pk=self.pk)
@@ -223,3 +229,114 @@ class Reserva(models.Model):
         if is_new and self.status == 'ativa':
             self.livro.quantidade_disponivel -= 1
             self.livro.save()
+
+
+class Categoria(models.Model):
+    nome = models.CharField(max_length=100, unique=True, verbose_name='Nome da Categoria')
+    descricao = models.TextField(blank=True, verbose_name='Descrição')
+    data_cadastro = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Data de Cadastro'
+    )
+    
+    class Meta:
+        verbose_name = 'Categoria'
+        verbose_name_plural = 'Categorias'
+        ordering = ['nome']
+    
+    def __str__(self):
+        return self.nome
+
+
+class Emprestimo(models.Model):
+    STATUS_EMPRESTIMO = [
+        ('ativo', 'Ativo'),
+        ('devolvido', 'Devolvido'),
+        ('atrasado', 'Atrasado'),
+    ]
+    
+    usuario = models.ForeignKey(
+        Usuario,
+        on_delete=models.CASCADE,
+        related_name='emprestimos',
+        verbose_name='Usuário'
+    )
+    
+    livro = models.ForeignKey(
+        Livro,
+        on_delete=models.CASCADE,
+        related_name='emprestimos',
+        verbose_name='Livro'
+    )
+    
+    data_emprestimo = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name='Data do Empréstimo'
+    )
+    
+    data_devolucao_prevista = models.DateTimeField(
+        verbose_name='Data de Devolução Prevista'
+    )
+    
+    data_devolucao = models.DateTimeField(
+        null=True,
+        blank=True,
+        verbose_name='Data de Devolução'
+    )
+    
+    status = models.CharField(
+        max_length=10,
+        choices=STATUS_EMPRESTIMO,
+        default='ativo',
+        verbose_name='Status'
+    )
+    
+    renovacoes = models.PositiveIntegerField(
+        default=0,
+        verbose_name='Número de Renovações'
+    )
+    
+    class Meta:
+        verbose_name = 'Empréstimo'
+        verbose_name_plural = 'Empréstimos'
+        ordering = ['-data_emprestimo']
+    
+    def __str__(self):
+        return f"Empréstimo de {self.livro.titulo} para {self.usuario.username}"
+    
+    def save(self, *args, **kwargs):
+        if not self.pk:
+            # Novo empréstimo - definir data de devolução prevista (15 dias)
+            self.data_devolucao_prevista = timezone.now() + timedelta(days=15)
+        super().save(*args, **kwargs)
+    
+    def devolver(self):
+        """Marca o empréstimo como devolvido"""
+        if not self.data_devolucao:
+            self.data_devolucao = timezone.now()
+            self.status = 'devolvido'
+            # Aumentar quantidade disponível do livro
+            self.livro.quantidade_disponivel += 1
+            self.livro.save()
+            self.save()
+    
+    def renovar(self):
+        """Renova o empréstimo por mais 15 dias"""
+        if self.renovacoes < 2 and not self.data_devolucao:
+            self.data_devolucao_prevista = timezone.now() + timedelta(days=15)
+            self.renovacoes += 1
+            self.save()
+            return True
+        return False
+    
+    def is_atrasado(self):
+        """Verifica se o empréstimo está atrasado"""
+        if not self.data_devolucao and timezone.now() > self.data_devolucao_prevista:
+            return True
+        return False
+    
+    def dias_atraso(self):
+        """Calcula quantos dias de atraso"""
+        if self.is_atrasado():
+            return (timezone.now() - self.data_devolucao_prevista).days
+        return 0
