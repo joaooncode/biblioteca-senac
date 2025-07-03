@@ -46,7 +46,7 @@
             </a>
           {% endif %}
           
-          {% if user.is_authenticated and user.is_admin() %}
+          {% if user.is_authenticated and user.is_admin %}
             <a href="{% url 'biblioteca:livro_update' livro.pk %}" class="btn btn-warning">
               Editar
             </a>

@@ -8,7 +8,7 @@
   <div class="col-md-8">
     <h2>Lista de Autores</h2>
   </div>  <div class="col-md-4 text-end">
-    {% if user.is_authenticated and user.is_admin() %}
+    {% if user.is_authenticated and user.is_admin %}
       <a href="{% url 'biblioteca:autor_create' %}" class="btn btn-success">
         Adicionar Autor
       </a>
@@ -34,7 +34,7 @@
                 Ver Detalhes
               </a>
               
-              {% if user.is_authenticated and user.is_admin() %}
+              {% if user.is_authenticated and user.is_admin %}
                 <div class="btn-group" role="group">
                   <a href="{% url 'biblioteca:autor_update' autor.pk %}" class="btn btn-warning btn-sm">
                     Editar
@@ -54,7 +54,7 @@
       <div class="alert alert-info text-center">
         <h4>Nenhum autor encontrado</h4>
         <p>Não há autores cadastrados no sistema.</p>
-        {% if user.is_authenticated and user.is_admin() %}
+        {% if user.is_authenticated and user.is_admin %}
           <a href="{% url 'biblioteca:autor_create' %}" class="btn btn-primary">
             Adicionar Primeiro Autor
           </a>

@@ -46,7 +46,7 @@
           <a href="{% url 'biblioteca:minhas_reservas' %}" class="btn btn-outline-success">
             Minhas Reservas
           </a>
-          {% if user.is_admin() %}
+          {% if user.is_admin %}
           <a href="{% url 'biblioteca:admin_dashboard' %}" class="btn btn-outline-warning">
             Painel Admin
           </a>

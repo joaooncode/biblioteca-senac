@@ -75,7 +75,7 @@
         <div class="col-md-8">
           <h2>Catálogo de Livros</h2>
         </div>        <div class="col-md-4 text-end">
-          {% if user.is_authenticated and user.is_admin() %}
+          {% if user.is_authenticated and user.is_admin %}
           <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-success"
             >Adicionar Livro</a
           >
@@ -157,7 +157,7 @@
                   {% endif %}
                 {% endif %}
                 
-                {% if user.is_authenticated and user.is_admin() %}
+                {% if user.is_authenticated and user.is_admin %}
                 <div class="btn-group" role="group">
                   <a
                     href="{% url 'biblioteca:livro_update' livro.pk %}"
@@ -183,7 +183,7 @@
               Não há livros cadastrados no sistema ou nenhum livro corresponde à
               sua busca.
             </p>
-            {% if user.is_authenticated and user.is_admin() %}
+            {% if user.is_authenticated and user.is_admin %}
             <a
               href="{% url 'biblioteca:livro_create' %}"
               class="btn btn-primary"
