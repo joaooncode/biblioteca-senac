@@ -128,3 +128,8 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # Custom User Model
 AUTH_USER_MODEL = 'biblioteca.Usuario'
+
+# Login/Logout redirects
+LOGIN_REDIRECT_URL = 'biblioteca:home'
+LOGOUT_REDIRECT_URL = 'biblioteca:home'
+LOGIN_URL = 'biblioteca:login'
