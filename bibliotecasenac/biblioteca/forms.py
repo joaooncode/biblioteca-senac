@@ -66,16 +66,15 @@ class RegisterForm(UserCreationForm):
         })
 
 
-class UsuarioForm(forms.ModelForm):
+class LivroForm(forms.ModelForm):
     class Meta:
-        model = User
-        fields = ['username', 'first_name', 'last_name', 'email', 'tipo_usuario']
+        model = Livro
+        fields = ['titulo', 'autor', 'genero', 'quantidade']
         widgets = {
-            'username': forms.TextInput(attrs={'class': 'form-control'}),
-            'first_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'last_name': forms.TextInput(attrs={'class': 'form-control'}),
-            'email': forms.EmailInput(attrs={'class': 'form-control'}),
-            'tipo_usuario': forms.Select(attrs={'class': 'form-control'}),
+            'titulo': forms.TextInput(attrs={'class': 'form-control'}),
+            'autor': forms.Select(attrs={'class': 'form-control'}),
+            'genero': forms.Select(attrs={'class': 'form-control'}),
+            'quantidade': forms.NumberInput(attrs={'class': 'form-control', 'min': 1}),
         }
 
 
@@ -84,10 +83,7 @@ class AutorForm(forms.ModelForm):
         model = Autor
         fields = ['nome']
         widgets = {
-            'nome': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome do autor'
-            })
+            'nome': forms.TextInput(attrs={'class': 'form-control'}),
         }
 
 
@@ -96,38 +92,9 @@ class CategoriaForm(forms.ModelForm):
         model = Categoria
         fields = ['nome', 'descricao']
         widgets = {
-            'nome': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Nome da categoria'
-            }),
-            'descricao': forms.Textarea(attrs={
-                'class': 'form-control',
-                'placeholder': 'Descrição da categoria',
-                'rows': 3
-            })
+            'nome': forms.TextInput(attrs={'class': 'form-control'}),
+            'descricao': forms.Textarea(attrs={'class': 'form-control', 'rows': 3}),
         }
-
-
-class LivroForm(forms.ModelForm):
-    class Meta:
-        model = Livro
-        fields = ['titulo', 'autor', 'genero', 'quantidade']
-        widgets = {
-            'titulo': forms.TextInput(attrs={
-                'class': 'form-control',
-                'placeholder': 'Título do livro'
-            }),
-            'autor': forms.Select(attrs={'class': 'form-control'}),
-            'genero': forms.Select(attrs={'class': 'form-control'}),
-            'quantidade': forms.NumberInput(attrs={
-                'class': 'form-control',
-                'min': '1'
-            })
-        }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        self.fields['autor'].queryset = Autor.objects.all().order_by('nome')
 
 
 class EmprestimoForm(forms.ModelForm):
@@ -136,14 +103,8 @@ class EmprestimoForm(forms.ModelForm):
         fields = ['usuario', 'livro']
         widgets = {
             'usuario': forms.Select(attrs={'class': 'form-control'}),
-            'livro': forms.Select(attrs={'class': 'form-control'})
+            'livro': forms.Select(attrs={'class': 'form-control'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Apenas livros disponíveis
-        self.fields['livro'].queryset = Livro.objects.filter(quantidade_disponivel__gt=0)
-        self.fields['usuario'].queryset = User.objects.filter(tipo_usuario='aluno')
 
 
 class ReservaForm(forms.ModelForm):
@@ -151,27 +112,20 @@ class ReservaForm(forms.ModelForm):
         model = Reserva
         fields = ['livro']
         widgets = {
-            'livro': forms.Select(attrs={'class': 'form-control'})
+            'livro': forms.Select(attrs={'class': 'form-control'}),
         }
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-        # Apenas livros disponíveis
-        self.fields['livro'].queryset = Livro.objects.filter(quantidade_disponivel__gt=0)
 
 
 class BuscarLivroForm(forms.Form):
-    query = forms.CharField(
-        max_length=200,
+    q = forms.CharField(
+        required=False,
         widget=forms.TextInput(attrs={
             'class': 'form-control',
-            'placeholder': 'Buscar por título, autor ou gênero...'
-        }),
-        label='Buscar'
+            'placeholder': 'Buscar por título, autor...'
+        })
     )
     genero = forms.ChoiceField(
         choices=[('', 'Todos os gêneros')] + Livro.TIPO_GENERO,
         required=False,
-        widget=forms.Select(attrs={'class': 'form-control'}),
-        label='Gênero'
+        widget=forms.Select(attrs={'class': 'form-control'})
     )
