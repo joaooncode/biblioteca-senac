@@ -24,45 +24,27 @@
         </h1>
         <nav>
           <ul class="nav nav-pills">
+            {% if user.is_authenticated and user.is_admin %}
             <li class="nav-item">
-              <a class="nav-link text-white" href="{% url 'biblioteca:home' %}"
-                >Home</a
-              >
+              <a class="nav-link text-white" href="{% url 'biblioteca:home' %}">Home</a>
             </li>
+            {% endif %}
             <li class="nav-item">
-              <a
-                class="nav-link text-white active"
-                href="{% url 'biblioteca:livro_list' %}"
-                >Livros</a
-              >
+              <a class="nav-link text-white active" href="{% url 'biblioteca:livro_list' %}">Livros</a>
             </li>
             {% if user.is_authenticated %}
             <li class="nav-item">
-              <a
-                class="nav-link text-white"
-                href="{% url 'biblioteca:profile' %}"
-                >Perfil</a
-              >
+              <a class="nav-link text-white" href="{% url 'biblioteca:profile' %}">Perfil</a>
             </li>
             <li class="nav-item">
-              <a
-                class="nav-link text-white"
-                href="{% url 'biblioteca:logout' %}"
-                >Sair</a
-              >
+              <a class="nav-link text-white" href="{% url 'biblioteca:logout' %}">Sair</a>
             </li>
             {% else %}
             <li class="nav-item">
-              <a class="nav-link text-white" href="{% url 'biblioteca:login' %}"
-                >Entrar</a
-              >
+              <a class="nav-link text-white" href="{% url 'biblioteca:login' %}">Entrar</a>
             </li>
             <li class="nav-item">
-              <a
-                class="nav-link text-white"
-                href="{% url 'biblioteca:register' %}"
-                >Cadastrar</a
-              >
+              <a class="nav-link text-white" href="{% url 'biblioteca:register' %}">Cadastrar</a>
             </li>
             {% endif %}
           </ul>
@@ -74,7 +56,8 @@
       <div class="row mb-4">
         <div class="col-md-8">
           <h2>Catálogo de Livros</h2>
-        </div>        <div class="col-md-4 text-end">
+        </div>
+        <div class="col-md-4 text-end">
           {% if user.is_authenticated and user.is_admin %}
           <a href="{% url 'biblioteca:livro_create' %}" class="btn btn-success"
             >Adicionar Livro</a

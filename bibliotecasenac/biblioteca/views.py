@@ -10,6 +10,7 @@ from django.urls import reverse_lazy
 from django.core.exceptions import ValidationError
 from .forms import LoginForm, RegisterForm, LivroForm, AutorForm, CategoriaForm, EmprestimoForm, ReservaForm
 from .models import Livro, Autor, Categoria, Emprestimo, Reserva, Usuario
+import datetime
 
 # Mixin for admin-only access
 class AdminRequiredMixin(UserPassesTestMixin):
@@ -17,8 +18,16 @@ class AdminRequiredMixin(UserPassesTestMixin):
         return self.request.user.is_authenticated and self.request.user.is_admin()
 
 # Basic views
-class HomeView(TemplateView):
+class HomeView(AdminRequiredMixin, TemplateView):
     template_name = 'biblioteca/home.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_livros'] = Livro.objects.count()
+        context['total_usuarios'] = Usuario.objects.count()
+        context['emprestimos_ativos'] = Emprestimo.objects.filter(status='ativa').count()
+        context['reservas_ativas'] = Reserva.objects.filter(status='ativa').count()
+        return context
 
 class LoginView(AuthLoginView):
     template_name = 'biblioteca/login.html'
@@ -164,9 +173,20 @@ class MinhasReservasView(LoginRequiredMixin, ListView):
     model = Reserva
     template_name = 'biblioteca/minhas_reservas.html'
     context_object_name = 'reservas'
-    
+
     def get_queryset(self):
+        # This is not used by the template, so we override get_context_data
         return Reserva.objects.filter(usuario=self.request.user)
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        user_reservas = Reserva.objects.filter(usuario=self.request.user)
+        context['reservas_ativas'] = user_reservas.filter(status='ativa')
+        context['reservas_historico'] = user_reservas.exclude(status='ativa')
+        context['reservas_expiradas'] = user_reservas.filter(status='expirada')
+        context['reservas_canceladas'] = user_reservas.filter(status='cancelada')
+        context['total_reservas'] = user_reservas.count()
+        return context
 
 class ReservarLivroView(LoginRequiredMixin, CreateView):
     model = Reserva
@@ -224,14 +244,85 @@ class CancelarReservaView(LoginRequiredMixin, UpdateView):
         messages.success(request, 'Reserva cancelada com sucesso!')
         return redirect('biblioteca:minhas_reservas')
 
+class ReservaDetailView(DetailView):
+    model = Reserva
+    template_name = 'biblioteca/reserva_detail.html'
+    context_object_name = 'reserva'
+
 # Admin views
 class AdminDashboardView(AdminRequiredMixin, TemplateView):
     template_name = 'biblioteca/admin_dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        context['total_livros'] = Livro.objects.count()
+        context['total_usuarios'] = Usuario.objects.count()
+        context['emprestimos_ativos'] = Emprestimo.objects.filter(status='ativa').count()
+        context['reservas_ativas'] = Reserva.objects.filter(status='ativa').count()
+        # Optionally add more context for alerts and recent activities
+        context['emprestimos_vencidos'] = Emprestimo.objects.filter(status='vencido')
+        context['reservas_expirando'] = Reserva.objects.filter(status='expirada')
+        context['livros_sem_estoque'] = Livro.objects.filter(quantidade_disponivel=0)
+        context['atividades_recentes'] = []  # Add your logic for recent activities here
+        return context
 
 class UsuarioListView(AdminRequiredMixin, ListView):
     model = Usuario
     template_name = 'biblioteca/usuario_list.html'
     context_object_name = 'usuarios'
+    paginate_by = 12
+
+    def get_queryset(self):
+        queryset = Usuario.objects.all()
+        search = self.request.GET.get('search')
+        tipo_usuario = self.request.GET.get('tipo_usuario')
+        status = self.request.GET.get('status')
+        ordenar = self.request.GET.get('ordenar')
+
+        if search:
+            queryset = queryset.filter(
+                Q(username__icontains=search) |
+                Q(email__icontains=search) |
+                Q(first_name__icontains=search) |
+                Q(last_name__icontains=search)
+            )
+        if tipo_usuario:
+            queryset = queryset.filter(tipo_usuario=tipo_usuario)
+        if status:
+            if status == 'ativo':
+                queryset = queryset.filter(is_active=True)
+            elif status == 'inativo':
+                queryset = queryset.filter(is_active=False)
+        if ordenar:
+            if ordenar == 'nome':
+                queryset = queryset.order_by('first_name', 'last_name')
+            elif ordenar == 'data_cadastro':
+                queryset = queryset.order_by('-date_joined')
+            elif ordenar == 'ultimo_acesso':
+                queryset = queryset.order_by('-last_login')
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        usuarios = context['usuarios']
+
+        # Estatísticas
+        now = datetime.datetime.now()
+        context['total_usuarios'] = Usuario.objects.count()
+        context['usuarios_ativos'] = Usuario.objects.filter(is_active=True).count()
+        context['usuarios_admin'] = Usuario.objects.filter(tipo_usuario='admin').count()
+        context['novos_usuarios_mes'] = Usuario.objects.filter(
+            date_joined__month=now.month,
+            date_joined__year=now.year
+        ).count()
+
+        # Estatísticas individuais
+        for usuario in usuarios:
+            usuario.emprestimos_count = Emprestimo.objects.filter(usuario=usuario).count()
+            usuario.reservas_count = Reserva.objects.filter(usuario=usuario).count()
+            usuario.pendencias_count = Emprestimo.objects.filter(usuario=usuario, status='vencido').count()
+
+        return context
 
 class UsuarioDetailView(AdminRequiredMixin, DetailView):
     model = Usuario
@@ -291,6 +382,11 @@ class CategoriaListView(ListView):
     model = Categoria
     template_name = 'biblioteca/categoria_list.html'
     context_object_name = 'categorias'
+
+class CategoriaDetailView(DetailView):
+    model = Categoria
+    template_name = 'biblioteca/categoria_detail.html'
+    context_object_name = 'categoria'
 
 class CategoriaCreateView(AdminRequiredMixin, CreateView):
     model = Categoria

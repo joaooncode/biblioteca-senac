@@ -39,9 +39,10 @@
       <div class="card-header bg-info text-white">
         <h5 class="card-title mb-0">Ações</h5>
       </div>
-      <div class="card-body">        <div class="d-grid gap-2">
+      <div class="card-body">
+        <div class="d-grid gap-2">
           {% if user.is_authenticated and livro.is_available %}
-            <a href="{% url 'biblioteca:reservar_livro' livro_id=livro.pk %}" class="btn btn-success">
+            <a href="{% url 'biblioteca:reservar_livro' livro.pk %}" class="btn btn-success">
               Reservar Livro
             </a>
           {% endif %}

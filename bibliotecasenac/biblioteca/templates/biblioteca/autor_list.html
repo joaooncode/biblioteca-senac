@@ -7,7 +7,8 @@
 <div class="row mb-4">
   <div class="col-md-8">
     <h2>Lista de Autores</h2>
-  </div>  <div class="col-md-4 text-end">
+  </div>
+  <div class="col-md-4 text-end">
     {% if user.is_authenticated and user.is_admin %}
       <a href="{% url 'biblioteca:autor_create' %}" class="btn btn-success">
         Adicionar Autor

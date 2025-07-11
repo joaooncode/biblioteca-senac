@@ -1,5 +1,6 @@
 {% extends 'biblioteca/base.html' %}
 {% load static %}
+{% load humanize %}
 
 {% block title %}Painel Administrativo - Sistema de Biblioteca SENAC{% endblock %}
 
@@ -158,21 +159,21 @@
       <div class="card-body">
         {% if emprestimos_vencidos %}
           <div class="alert alert-danger">
-            <strong>{{ emprestimos_vencidos.count }} empréstimo{{ emprestimos_vencidos.count|pluralize }} vencido{{ emprestimos_vencidos.count|pluralize }}!</strong>
+            <strong>{{ emprestimos_vencidos.count }} empréstimo{{ emprestimos_vencidos.count|pluralize:",s" }} vencido{{ emprestimos_vencidos.count|pluralize:",s" }}!</strong>
             <a href="{% url 'biblioteca:emprestimo_list' %}?status=vencido" class="alert-link">Ver detalhes</a>
           </div>
         {% endif %}
         
         {% if reservas_expirando %}
           <div class="alert alert-warning">
-            <strong>{{ reservas_expirando.count }} reserva{{ reservas_expirando.count|pluralize }} expirando em breve!</strong>
+            <strong>{{ reservas_expirando.count }} reserva{{ reservas_expirando.count|pluralize:",s" }} expirando em breve!</strong>
             <a href="{% url 'biblioteca:reserva_list' %}?expirando=true" class="alert-link">Ver detalhes</a>
           </div>
         {% endif %}
         
         {% if livros_sem_estoque %}
           <div class="alert alert-info">
-            <strong>{{ livros_sem_estoque.count }} livro{{ livros_sem_estoque.count|pluralize }} sem estoque!</strong>
+            <strong>{{ livros_sem_estoque.count }} livro{{ livros_sem_estoque.count|pluralize:",s" }} sem estoque!</strong>
             <a href="{% url 'biblioteca:livro_list' %}?disponivel=false" class="alert-link">Ver detalhes</a>
           </div>
         {% endif %}
