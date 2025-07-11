@@ -11,6 +11,7 @@ from django.core.exceptions import ValidationError
 from .forms import LoginForm, RegisterForm, LivroForm, AutorForm, CategoriaForm, EmprestimoForm, ReservaForm
 from .models import Livro, Autor, Categoria, Emprestimo, Reserva, Usuario
 import datetime
+from django.db import models
 
 # Mixin for admin-only access
 class AdminRequiredMixin(UserPassesTestMixin):
@@ -421,8 +422,71 @@ class CategoriaDeleteView(AdminRequiredMixin, DeleteView):
 class RelatoriosView(AdminRequiredMixin, TemplateView):
     template_name = 'biblioteca/relatorios.html'
 
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        data_inicio = self.request.GET.get('data_inicio')
+        data_fim = self.request.GET.get('data_fim')
+        tipo_relatorio = self.request.GET.get('tipo_relatorio')
+
+        emprestimos = Emprestimo.objects.all()
+        if data_inicio:
+            emprestimos = emprestimos.filter(data_emprestimo__gte=data_inicio)
+        if data_fim:
+            emprestimos = emprestimos.filter(data_emprestimo__lte=data_fim)
+
+        total_emprestimos = emprestimos.count()
+
+        # Livros mais emprestados (correto)
+        livros_populares = (
+            Livro.objects
+            .filter(id__in=emprestimos.values_list('livro', flat=True))
+            .annotate(total_emprestimos=models.Count('emprestimos'))
+            .order_by('-total_emprestimos')[:10]
+        )
+
+        usuarios_ativos = Usuario.objects.filter(
+            id__in=emprestimos.filter(status='ativa').values_list('usuario', flat=True)
+        ).count()
+
+        devolvidos_no_prazo = emprestimos.filter(
+            status='devolvido',
+            data_devolucao__lte=models.F('data_devolucao_prevista')
+        ).count()
+        total_devolvidos = emprestimos.filter(status='devolvido').count()
+        taxa_devolucao = (
+            (devolvidos_no_prazo / total_devolvidos) * 100 if total_devolvidos > 0 else 0
+        )
+
+        context['stats'] = {
+            'total_emprestimos': total_emprestimos,
+            'livros_populares': livros_populares.count(),
+            'usuarios_ativos': usuarios_ativos,
+            'taxa_devolucao': round(taxa_devolucao, 2),
+        }
+        context['emprestimos'] = emprestimos
+        context['livros_populares'] = livros_populares
+        context['today'] = datetime.date.today()
+        return context
+
 class DashboardView(LoginRequiredMixin, TemplateView):
     template_name = 'biblioteca/dashboard.html'
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        # Estatísticas principais
+        context['stats'] = {
+            'total_livros': Livro.objects.count(),
+            'total_usuarios': Usuario.objects.filter(is_active=True).count(),
+            'emprestimos_ativos': Emprestimo.objects.filter(status='ativa').count(),
+            'emprestimos_atrasados': Emprestimo.objects.filter(status='vencido').count(),
+        }
+        # Livros mais emprestados
+        context['livros_populares'] = (
+            Livro.objects
+            .annotate(total_emprestimos=models.Count('emprestimos'))
+            .order_by('-total_emprestimos')[:10]
+        )
+        return context
 
 class VerificarDisponibilidadeView(TemplateView):
     template_name = 'biblioteca/verificar_disponibilidade.html'
