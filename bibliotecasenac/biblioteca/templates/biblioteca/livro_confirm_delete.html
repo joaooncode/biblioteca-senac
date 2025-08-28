@@ -15,9 +15,32 @@
         <h5>Tem certeza que deseja excluir o livro:</h5>
         <p class="lead">"{{ object.titulo }}" de {{ object.autor.nome }}?</p>
         
-        <div class="alert alert-warning">
-          <strong>Atenção:</strong> Esta ação não pode ser desfeita!
-        </div>
+        {% if tem_reservas_ativas %}
+          <div class="alert alert-danger">
+            <strong>Não é possível excluir este livro!</strong><br>
+            Existem reservas ativas para este livro.
+            <br><br>
+            <strong>Para excluir o livro:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Cancelar todas as reservas ativas primeiro</li>
+              <li>Ou aguardar que as reservas expirem</li>
+            </ul>
+          </div>
+        {% elif tem_emprestimos_ativos %}
+          <div class="alert alert-danger">
+            <strong>Não é possível excluir este livro!</strong><br>
+            Existem empréstimos ativos para este livro.
+            <br><br>
+            <strong>Para excluir o livro:</strong>
+            <ul class="mb-0 mt-2">
+              <li>Devolver todos os empréstimos ativos primeiro</li>
+            </ul>
+          </div>
+        {% else %}
+          <div class="alert alert-warning">
+            <strong>Atenção:</strong> Esta ação não pode ser desfeita!
+          </div>
+        {% endif %}
 
         <form method="post">
           {% csrf_token %}
@@ -25,9 +48,15 @@
             <a href="{% url 'biblioteca:livro_detail' object.pk %}" class="btn btn-outline-secondary">
               Cancelar
             </a>
-            <button type="submit" class="btn btn-danger">
-              Sim, Excluir
-            </button>
+            {% if tem_reservas_ativas or tem_emprestimos_ativos %}
+              <button type="submit" class="btn btn-danger" disabled title="Não é possível excluir este livro devido a reservas ou empréstimos ativos">
+                Sim, Excluir
+              </button>
+            {% else %}
+              <button type="submit" class="btn btn-danger">
+                Sim, Excluir
+              </button>
+            {% endif %}
           </div>
         </form>
       </div>

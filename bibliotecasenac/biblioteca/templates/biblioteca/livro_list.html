@@ -115,8 +115,7 @@
                 <strong>Disponível:</strong>
                 {% if livro.quantidade_disponivel > 0 %}
                 <span class="badge bg-success"
-                  >{{ livro.quantidade_disponivel }} unidade{{
-                  livro.quantidade_disponivel|pluralize:"s" }}</span
+                  >{{ livro.quantidade_disponivel }} unidade{{ livro.quantidade_disponivel|pluralize:"s" }}</span
                 >
                 {% else %}
                 <span class="badge bg-danger">Indisponível</span>
