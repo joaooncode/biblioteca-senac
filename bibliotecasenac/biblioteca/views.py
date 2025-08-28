@@ -120,9 +120,20 @@ class LivroDeleteView(AdminRequiredMixin, DeleteView):
     template_name = 'biblioteca/livro_confirm_delete.html'
     success_url = reverse_lazy('biblioteca:livro_list')
     
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        livro = self.get_object()
+        context['tem_reservas_ativas'] = livro.reservas.filter(status='ativa').exists()
+        context['tem_emprestimos_ativos'] = livro.emprestimos.filter(status='ativo').exists()
+        return context
+    
     def delete(self, request, *args, **kwargs):
-        messages.success(request, 'Livro excluído com sucesso!')
-        return super().delete(request, *args, **kwargs)
+        try:
+            messages.success(request, 'Livro excluído com sucesso!')
+            return super().delete(request, *args, **kwargs)
+        except ValidationError as e:
+            messages.error(request, str(e))
+            return redirect('biblioteca:livro_detail', pk=self.get_object().pk)
 
 # Autor views
 class AutorListView(ListView):
